@@ -57,10 +57,13 @@ const EASE_OUT_QUART: [number, number, number, number] = [0.25, 0.4, 0.25, 1];
 
 const CYCLE_WORDS = [
   <>
-    <span className="text-[#39ff14]">tea</span>
+    <span className="text-[#39ff14]">tailored</span>
   </>,
   <>
-    <span className="text-[#39ff14]">matcha</span>
+    <span className="text-[#39ff14]">curated</span>
+  </>,
+  <>
+    <span className="text-[#39ff14]">refined</span>
   </>,
 ];
 
@@ -176,7 +179,7 @@ export default function LoginPage() {
               <p
                 className="text-4xl leading-tight text-center w-full font-sans"
               >
-                <span className="text-foreground font-bold">Body </span>
+                <span className="text-foreground font-bold">Style </span>
                 <AnimatedTextCycle words={CYCLE_WORDS} interval={2000} />
               </p>
             </motion.div>
