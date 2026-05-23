@@ -34,7 +34,7 @@ export function RecommendationCard({ recommendation, onDismiss }: Recommendation
         <h3 className="font-display text-sm font-semibold truncate kit-strong">
           {recommendation.name}
         </h3>
-        <span className="font-display text-sm font-bold kit-strong flex-shrink-0">
+        <span className="font-sans text-sm font-bold kit-strong flex-shrink-0">
           ${recommendation.estimatedPrice}
         </span>
       </div>

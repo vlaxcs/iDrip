@@ -20,7 +20,7 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
           </div>
           <span className="kit-overline">Monthly Budget</span>
         </div>
-        <span className="kit-display text-2xl">${remaining}</span>
+        <span className="font-sans kit-display text-2xl">${remaining}</span>
       </div>
 
       <div className="flex items-center justify-between text-xs kit-muted mb-2">

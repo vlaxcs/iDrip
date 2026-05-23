@@ -333,7 +333,7 @@ function PlanCard({
             <div className="kit-display text-4xl">Free</div>
           ) : (
             <div className="flex items-baseline gap-1">
-              <span className="kit-display text-4xl">
+              <span className="font-sans kit-display text-4xl">
                 ${plan.price.toFixed(plan.price % 1 === 0 ? 0 : 2)}
               </span>
               {plan.interval && (
