@@ -31,11 +31,6 @@ export function QuickActions({ onUploadClick }: QuickActionsProps) {
 
   return (
     <section>
-      <div className="mb-4">
-        <p className="kit-overline">Quick</p>
-        <h3 className="kit-display text-2xl md:text-3xl mt-1.5">Actions</h3>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {actions.map((action) => (
           <button

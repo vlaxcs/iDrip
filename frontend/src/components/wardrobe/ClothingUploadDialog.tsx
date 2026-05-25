@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { X, Sparkles, AlertTriangle, ChevronDown, ChevronUp, Check, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ImageUploader } from "@/components/shared/ImageUploader";
@@ -34,6 +34,81 @@ interface ClothingUploadDialogProps {
   onClose: () => void;
 }
 
+function CustomDropdown({
+  value,
+  onChange,
+  options,
+  placeholder = "—"
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)] hover:bg-[hsl(var(--frost)/0.8)] transition-colors"
+      >
+        <span className={selected ? "text-foreground" : "text-muted-foreground"}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 py-1 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border)/0.4)] shadow-lg max-h-48 overflow-y-auto scrollbar-hide">
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
+            className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-[hsl(var(--sidebar-accent)/0.15)] hover:text-[hsl(var(--sidebar-accent))] transition-colors"
+          >
+            {placeholder}
+          </button>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={cn(
+                "w-full text-left px-3 py-1.5 text-sm transition-colors",
+                value === opt.value
+                  ? "bg-[hsl(var(--sidebar-accent)/0.2)] text-green-700 dark:text-green-400 font-medium"
+                  : "hover:bg-[hsl(var(--sidebar-accent)/0.1)] hover:text-green-600 dark:hover:text-green-400"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MultiSelectPills({
   values,
   onChange,
@@ -57,7 +132,7 @@ function MultiSelectPills({
           className={cn(
             "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
             values.includes(opt.value)
-              ? "bg-[hsl(var(--glacier))] text-white border-transparent"
+              ? "bg-[hsl(var(--sidebar-accent))] text-black border-transparent"
               : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)]"
           )}
         >
@@ -88,7 +163,11 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
     setSavingProgress({ done: 0, total: 0 });
     clearAll();
   }, [clearAll]);
-
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open, resetForm]);
   // ── Add files to batch ──
   const handleFilesSelected = useCallback(async (files: File[]) => {
     setError(null);
@@ -207,7 +286,13 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
   // ── Approve / skip ──
   const handleApprove = useCallback((itemId: string) => {
     setItems((prev) =>
-      prev.map((it) => (it.id === itemId ? { ...it, status: "approved" } : it))
+      prev.map((it) => (it.id === itemId ? { ...it, status: "approved", collapsed: true } : it))
+    );
+  }, []);
+
+  const handleUnapprove = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, status: "analyzed", collapsed: false } : it))
     );
   }, []);
 
@@ -319,7 +404,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         <input
           value={stringVal}
           onChange={(e) => updateItemField(item.id, key, e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+          className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)]"
         />
       );
     }
@@ -332,7 +417,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
             type="range" min={1} max={10}
             value={numVal ?? 5}
             onChange={(e) => updateItemField(item.id, key, parseInt(e.target.value))}
-            className="flex-1 accent-[hsl(var(--glacier))]"
+            className="flex-1 accent-[hsl(var(--sidebar-accent))]"
           />
         </div>
       );
@@ -362,7 +447,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
             value={stringVal}
             onChange={(e) => updateItemField(item.id, key, e.target.value)}
             placeholder="#1a1a1a"
-            className="flex-1 px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+            className="flex-1 px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)]"
           />
         </div>
       );
@@ -393,7 +478,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
                 }
               }
             }}
-            className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+            className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)]"
           />
         </div>
       );
@@ -406,7 +491,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
           <input
             value={stringVal}
             onChange={(e) => updateItemField(item.id, key, e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+            className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)]"
           />
         );
       }
@@ -419,25 +504,20 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         <input
           value={stringVal}
           onChange={(e) => updateItemField(item.id, key, e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+          className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--sidebar-accent)/0.3)]"
         />
       );
     }
 
     return (
       <div className="relative">
-        <select
-          value={stringVal}
-          onChange={(e) => updateItemField(item.id, key, e.target.value || null)}
-          className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)] appearance-none"
-        >
-          <option value="">—</option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        <CustomDropdown
+          value={stringVal || ""}
+          onChange={(val) => updateItemField(item.id, key, val || null)}
+          options={options}
+        />
         {isLowConfidence && !stringVal && (
-          <AlertTriangle className="absolute right-8 top-2.5 w-3.5 h-3.5 text-amber-400" />
+          <AlertTriangle className="absolute right-8 top-2.5 w-3.5 h-3.5 text-amber-400 pointer-events-none" />
         )}
       </div>
     );
@@ -450,11 +530,6 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
 
   if (!shouldRender) return null;
 
-  const panelTransform =
-    phase === "enter" ? "translateY(100%)"
-    : phase === "exit" ? "translateY(100%)"
-    : "translateY(0)";
-
   return (
     <div className="fixed inset-0 z-60 flex items-end md:items-center justify-center">
       <div
@@ -464,11 +539,14 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
       />
 
       <div
-        className="relative w-full max-w-2xl max-h-[85vh] md:max-h-[92vh] overflow-y-auto bg-[hsl(var(--frost)/0.95)] backdrop-blur-2xl border border-[hsl(var(--border)/0.4)] rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-24 md:pb-6 safe-area-bottom"
+        className={cn(
+          "relative w-full max-w-2xl max-h-[85vh] md:max-h-[92vh] overflow-y-auto bg-[hsl(var(--frost)/0.95)] backdrop-blur-2xl border border-[hsl(var(--border)/0.4)] rounded-t-3xl md:rounded-3xl shadow-2xl p-6",
+          dialogState === "reviewing" ? "pb-0 md:pb-0" : "pb-24 md:pb-6"
+        )}
         style={{
-          transform: panelTransform,
-          transition: phase === "enter" || phase === "exit"
-            ? "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)" : "none",
+          transform: phase === "visible" ? "translateY(0) scale(1)" : "translateY(24px) scale(0.98)",
+          opacity: phase === "visible" ? 1 : 0,
+          transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
       >
         {/* ── Header ── */}
@@ -510,7 +588,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
             <button
               onClick={handleAnalyzeAll}
               disabled={queuedCount === 0}
-              className="w-full py-3 rounded-2xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl bg-[hsl(var(--sidebar-accent))] text-black text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               Analyze All ({queuedCount} {queuedCount === 1 ? "item" : "items"})
@@ -524,7 +602,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         {dialogState === "analyzing" && (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-3 py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--glacier))]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--sidebar-accent))]" />
               <span className="text-sm text-muted-foreground">
                 Analyzing {analyzedCount + 1} of {items.length}...
               </span>
@@ -559,12 +637,20 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
             STATE: REVIEWING
             ══════════════════════════════════════════════ */}
         {dialogState === "reviewing" && (
-          <div className="space-y-3">
-            {items.filter((it) => it.status === "analyzed" || it.status === "approved").length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No items were analyzed successfully. Go back and try again.
-              </div>
-            ) : (
+          <div className="flex flex-col min-h-0">
+            <div className="scrollbar-panel min-h-0 max-h-[calc(85vh-14rem)] md:max-h-[calc(92vh-14rem)] overflow-y-auto overflow-x-hidden px-1 pt-1 pb-8 pr-4 md:pb-9 md:pr-5">
+              <div className="space-y-3">
+                {items.filter((it) => it.status === "analyzed" || it.status === "approved").length === 0 ? (
+                  <div className="text-center py-12 flex flex-col items-center gap-4">
+                    <p className="text-muted-foreground text-sm">No items were analyzed successfully.</p>
+                    <button
+                      onClick={resetForm}
+                      className="px-5 py-2 rounded-xl bg-[hsl(var(--sidebar-surface))] border border-[hsl(var(--border)/0.5)] text-sm font-semibold hover:bg-[hsl(var(--sidebar-hover))] transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
               items.map((item) => {
                 if (item.status !== "analyzed" && item.status !== "approved") return null;
                 const fieldGroups = CATEGORY_FIELD_GROUPS[item.category];
@@ -627,7 +713,16 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
                           </>
                         )}
                         {item.status === "approved" && (
-                          <span className="text-xs font-semibold text-green-600 px-2">Approved</span>
+                          <button
+                            onClick={() => handleUnapprove(item.id)}
+                            className="group relative cursor-pointer px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden transition-colors w-24 text-center bg-green-500/10 text-green-600 hover:bg-red-500/10 hover:text-red-500"
+                            title="Unapprove"
+                          >
+                            <span className="opacity-100 group-hover:opacity-0 transition-opacity absolute inset-0 flex items-center justify-center">Approved</span>
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute inset-0 flex items-center justify-center">Unapprove</span>
+                            {/* invisible spacer to keep width correct if absolute text is wider or narrower */}
+                            <span className="invisible">Unapprove</span>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -642,15 +737,11 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="text-xs font-medium mb-1 block text-muted-foreground">Category</label>
-                            <select
+                            <CustomDropdown
                               value={item.category}
-                              onChange={(e) => updateItemCategory(item.id, e.target.value as ClothingCategory)}
-                              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
-                            >
-                              {CLOTHING_CATEGORIES.filter((c) => c.value !== "all").map((c) => (
-                                <option key={c.value} value={c.value}>{c.label}</option>
-                              ))}
-                            </select>
+                              onChange={(val) => updateItemCategory(item.id, val as ClothingCategory)}
+                              options={CLOTHING_CATEGORIES.filter((c) => c.value !== "all")}
+                            />
                           </div>
                           <div>
                             <label className="text-xs font-medium mb-1 block text-muted-foreground">Brand</label>
@@ -691,16 +782,21 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
                 );
               })
             )}
+              </div>
+            </div>
 
             {/* Bottom action bar */}
-            <div className="sticky bottom-0 bg-[hsl(var(--frost)/0.97)] backdrop-blur-xl border-t border-[hsl(var(--border)/0.3)] -mx-6 -mb-6 px-6 py-4 rounded-b-3xl flex items-center justify-between gap-4">
+            <div
+              className="sticky bottom-0 z-10 bg-[hsl(var(--frost))] border-t border-[hsl(var(--border)/0.3)] -mx-6 px-6 pt-4 rounded-b-3xl flex items-center justify-between gap-4"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
+            >
               <p className="text-sm text-muted-foreground">
                 {approvedCount} of {items.filter((it) => it.status === "analyzed" || it.status === "approved").length} approved
               </p>
               <button
                 onClick={handleSaveApproved}
                 disabled={approvedCount === 0}
-                className="px-6 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-xl bg-[hsl(var(--sidebar-accent))] text-black text-sm font-semibold hover:brightness-95 transition-[filter,opacity] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Save {approvedCount} {approvedCount === 1 ? "Item" : "Items"}
               </button>
@@ -720,7 +816,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
               }
             `}</style>
             <div
-              className="w-8 h-8 border-2 border-[hsl(var(--glacier)/0.3)] border-t-[hsl(var(--glacier))] rounded-full"
+              className="w-8 h-8 border-2 border-[hsl(var(--sidebar-accent)/0.3)] border-t-[hsl(var(--sidebar-accent))] rounded-full"
               style={{ animation: "idrip-spin 0.8s linear infinite" }}
             />
             <p className="text-sm text-muted-foreground">

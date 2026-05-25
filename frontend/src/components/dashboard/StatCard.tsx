@@ -23,7 +23,7 @@ export function StatCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <p className="kit-overline">{label}</p>
-          <p className="kit-display text-3xl mt-2.5 truncate">{value}</p>
+          <p className="kit-display font-sans text-3xl mt-2.5 truncate">{value}</p>
           {subtitle && (
             <p className="text-xs kit-muted mt-1">{subtitle}</p>
           )}
