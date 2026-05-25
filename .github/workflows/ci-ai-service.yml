@@ -6,13 +6,17 @@ on:
       - main
     paths:
       - "ai-service/**"
-      - ".github/workflows/lint-ai-service.yml"
+      - ".github/workflows/ci-ai-service.yml"
   pull_request:
     branches:
       - main
     paths:
       - "ai-service/**"
-      - ".github/workflows/lint-ai-service.yml"
+      - ".github/workflows/ci-ai-service.yml"
+  schedule:
+    # Weekly Monday 06:00 UTC — re-runs pip-audit against unchanged
+    # requirements to catch newly disclosed CVEs.
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -23,9 +27,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lint-and-build:
+  ci:
     runs-on: ubuntu-latest
-    name: Compile + Import
+    name: Compile + Import + Audit
     defaults:
       run:
         working-directory: ai-service
@@ -43,10 +47,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt pip-audit
 
       - name: Syntax check (compileall)
         run: python -m compileall -q .
 
       - name: Import smoke test
         run: python -c "import main"
+
+      - name: Audit
+        run: pip-audit -r requirements.txt --disable-pip
