@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Loader2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -41,11 +41,19 @@ export function WardrobePickerModal({
   const isLoading = useWardrobeStore((s) => s.isLoading);
   const navigate = useNavigate();
 
-  // Freeze slotKey during exit animation so the filtered list doesn't flash to "all items"
-  const frozenSlotKey = useRef(slotKey);
-  if (slotKey !== null) frozenSlotKey.current = slotKey;
-  const frozenSlotLabel = useRef(slotLabel);
-  if (slotLabel) frozenSlotLabel.current = slotLabel;
+  // Freeze slotKey/slotLabel during exit animation so the filtered list doesn't flash to "all items".
+  // The effect-driven update is intentional: we want to remember the last non-null prop value
+  // across the animation window where the parent has already set slotKey back to null.
+  const [frozenSlotKey, setFrozenSlotKey] = useState(slotKey);
+  const [frozenSlotLabel, setFrozenSlotLabel] = useState(slotLabel);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (slotKey !== null) setFrozenSlotKey(slotKey);
+  }, [slotKey]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (slotLabel) setFrozenSlotLabel(slotLabel);
+  }, [slotLabel]);
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +66,7 @@ export function WardrobePickerModal({
 
   if (!shouldRender) return null;
 
-  const category = frozenSlotKey.current ? SLOT_TO_CATEGORY[frozenSlotKey.current] : null;
+  const category = frozenSlotKey ? SLOT_TO_CATEGORY[frozenSlotKey] : null;
   const filtered = category ? items.filter((i) => i.category === category) : items;
 
   return (
@@ -84,7 +92,7 @@ export function WardrobePickerModal({
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[hsl(var(--border)/0.4)]">
           <div>
             <p className="kit-overline">Select item</p>
-            <h3 className="font-semibold text-base mt-0.5">{frozenSlotLabel.current}</h3>
+            <h3 className="font-semibold text-base mt-0.5">{frozenSlotLabel}</h3>
           </div>
           <button
             onClick={onClose}
@@ -105,7 +113,7 @@ export function WardrobePickerModal({
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <p className="text-sm kit-muted">
-                No {frozenSlotLabel.current.toLowerCase()} items in your wardrobe yet.
+                No {frozenSlotLabel.toLowerCase()} items in your wardrobe yet.
               </p>
               <button
                 onClick={() => { onClose(); navigate("/wardrobe"); }}
