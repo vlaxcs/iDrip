@@ -1,0 +1,59 @@
+name: CI ai-service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/ci-ai-service.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/ci-ai-service.yml"
+  schedule:
+    # Weekly Monday 06:00 UTC — re-runs pip-audit against unchanged
+    # requirements to catch newly disclosed CVEs.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    name: Compile + Import + Audit
+    defaults:
+      run:
+        working-directory: ai-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: ai-service/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pip-audit
+
+      - name: Syntax check (compileall)
+        run: python -m compileall -q .
+
+      - name: Import smoke test
+        run: python -c "import main"
+
+      - name: Audit
+        run: pip-audit

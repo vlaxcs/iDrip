@@ -1,0 +1,68 @@
+version: 2
+updates:
+  # Frontend (npm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    groups:
+      frontend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Backend (npm)
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+    groups:
+      backend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # AI-Agentic service (pip)
+  - package-ecosystem: "pip"
+    directory: "/ai-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ai-service"
+    groups:
+      ai-service-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions used across all workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"

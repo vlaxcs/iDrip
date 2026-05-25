@@ -94,7 +94,7 @@ export const useDrizzyChatStore = create<DrizzyChatState>()(
         }));
 
         try {
-          const response = await api.post<any>('/ai/chat', {
+          const response = await api.post<{ reply?: string }>('/ai/chat', {
             messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
           });
           const replyText = response?.reply || "Oops, I'm having trouble thinking right now.";
@@ -107,8 +107,8 @@ export const useDrizzyChatStore = create<DrizzyChatState>()(
             ),
             isTyping: false,
           }));
-        } catch (error: any) {
-          const errText = error.message || "Sorry, I couldn't connect right now! Try again in a moment.";
+        } catch (error) {
+          const errText = error instanceof Error ? error.message : "Sorry, I couldn't connect right now! Try again in a moment.";
           const errMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content: errText };
           set((s) => ({
             sessions: s.sessions.map((sess) =>

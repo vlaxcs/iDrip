@@ -99,8 +99,9 @@ export const useOutfitStore = create<OutfitState>()(
             backendOutfitToFrontend(raw as Record<string, unknown>)
           );
           set({ outfits });
-        } catch (err: any) {
-          console.warn("[outfitStore] Failed to load outfits:", err.message);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.warn("[outfitStore] Failed to load outfits:", message);
         }
       },
 
@@ -118,8 +119,8 @@ export const useOutfitStore = create<OutfitState>()(
             isGenerating: false,
           });
           return outfit;
-        } catch (err: any) {
-          const message = err.message || "Failed to generate outfit";
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to generate outfit";
           set({ isGenerating: false, error: message });
           throw err;
         }
@@ -135,8 +136,9 @@ export const useOutfitStore = create<OutfitState>()(
             currentBuild: {},
             error: null,
           }));
-        } catch (err: any) {
-          set({ error: err.message || "Failed to save outfit" });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to save outfit";
+          set({ error: message });
         }
       },
 
@@ -152,8 +154,8 @@ export const useOutfitStore = create<OutfitState>()(
             currentBuild: outfitToSlotBuild(outfit),
             isGenerating: false,
           });
-        } catch (err: any) {
-          const message = err.message || "Failed to regenerate outfit";
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to regenerate outfit";
           set({ isGenerating: false, error: message });
           throw err;
         }
