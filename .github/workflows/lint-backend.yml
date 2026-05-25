@@ -1,4 +1,4 @@
-name: Lint backend
+name: CI backend
 
 on:
   push:
@@ -19,9 +19,9 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  lint-and-build:
     runs-on: ubuntu-latest
-    name: Type-check
+    name: Type-check + Build
     defaults:
       run:
         working-directory: backend
@@ -41,3 +41,6 @@ jobs:
 
       - name: Type-check
         run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build

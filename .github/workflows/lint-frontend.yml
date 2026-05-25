@@ -1,4 +1,4 @@
-name: Lint frontend
+name: CI frontend
 
 on:
   push:
@@ -19,9 +19,9 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  lint-and-build:
     runs-on: ubuntu-latest
-    name: ESLint
+    name: Lint + Build
     defaults:
       run:
         working-directory: frontend
@@ -41,3 +41,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Build
+        run: npm run build
