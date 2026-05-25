@@ -7,6 +7,12 @@ node_modules/
 
 # testing
 /coverage
+playwright-report/
+test-results/
+.playwright/
+__pycache__/
+*.pyc
+.pytest_cache/
 
 # next.js
 /.next/

@@ -1,0 +1,49 @@
+name: Test ai-service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/test-ai-service.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/test-ai-service.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: pytest
+    defaults:
+      run:
+        working-directory: ai-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: ai-service/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest
