@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useWardrobeStore } from "@/stores/useWardrobeStore";
 import type { ClothingItem, ClothingCategory } from "@/types/wardrobe";
 import type { OutfitSlotKey } from "@/types/outfit";
 
@@ -36,6 +37,13 @@ export function WardrobePickerModal({
   useScrollLock(open);
   const visible = phase === "visible";
   const overlayRef = useRef<HTMLDivElement>(null);
+  const isLoading = useWardrobeStore((s) => s.isLoading);
+
+  // Freeze slotKey during exit animation so the filtered list doesn't flash to "all items"
+  const frozenSlotKey = useRef(slotKey);
+  if (slotKey !== null) frozenSlotKey.current = slotKey;
+  const frozenSlotLabel = useRef(slotLabel);
+  if (slotLabel) frozenSlotLabel.current = slotLabel;
 
   useEffect(() => {
     if (!open) return;
@@ -48,7 +56,7 @@ export function WardrobePickerModal({
 
   if (!shouldRender) return null;
 
-  const category = slotKey ? SLOT_TO_CATEGORY[slotKey] : null;
+  const category = frozenSlotKey.current ? SLOT_TO_CATEGORY[frozenSlotKey.current] : null;
   const filtered = category ? items.filter((i) => i.category === category) : items;
 
   return (
@@ -74,7 +82,7 @@ export function WardrobePickerModal({
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[hsl(var(--border)/0.4)]">
           <div>
             <p className="kit-overline">Select item</p>
-            <h3 className="font-semibold text-base mt-0.5">{slotLabel}</h3>
+            <h3 className="font-semibold text-base mt-0.5">{frozenSlotLabel.current}</h3>
           </div>
           <button
             onClick={onClose}
@@ -87,9 +95,14 @@ export function WardrobePickerModal({
 
         {/* Grid */}
         <div className="overflow-y-auto p-4">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 gap-2 kit-muted">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Loading wardrobe...</span>
+            </div>
+          ) : filtered.length === 0 ? (
             <p className="text-sm kit-muted text-center py-8">
-              No {slotLabel.toLowerCase()} items in your wardrobe yet.
+              No {frozenSlotLabel.current.toLowerCase()} items in your wardrobe yet.
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-3">

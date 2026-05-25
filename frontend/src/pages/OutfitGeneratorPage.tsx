@@ -257,7 +257,7 @@ export default function OutfitGeneratorPage() {
 
             <button
               onClick={handleSurpriseMe}
-              disabled={isGenerating || items.length < 3}
+              disabled={isGenerating || !hasEnoughItems}
               className="kit-btn-secondary w-full justify-center"
             >
               <Sparkles className="w-4 h-4" />
