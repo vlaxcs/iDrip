@@ -13,6 +13,7 @@ export interface AIGenerationRequest {
     feedback?: string | null;
     surprise_me?: boolean;
   };
+  locked_item_ids?: string[];
 }
 
 export interface AIGenerationResponse {
@@ -43,10 +44,15 @@ export async function generateOutfitAI(
     try {
       const response = await axios.post(
         `${AI_SERVICE_URL}/generate-outfit`,
-        request,
+        {
+          user_id: request.user_id,
+          wardrobe_items: request.wardrobe_items,
+          preferences: request.preferences,
+          locked_item_ids: request.locked_item_ids ?? [],
+        },
         {
           headers: { 'Content-Type': 'application/json' },
-          timeout: 90000,
+          timeout: 300000,
         }
       );
 
@@ -77,11 +83,16 @@ export async function generateOutfitAI(
     } catch (err: any) {
       lastError = err;
 
+      if (err.response) {
+        console.error('[aiGeneration] Error response:', err.response.status, JSON.stringify(err.response.data));
+      }
+
       if (attempt >= MAX_RETRIES) break;
 
       const status = err.response?.status;
-      // Don't retry 4xx (client errors)
+      // Don't retry 4xx errors or timeouts
       if (status && status >= 400 && status < 500) break;
+      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') break;
 
       const delay = RETRY_DELAY * Math.pow(2, attempt);
       console.warn(

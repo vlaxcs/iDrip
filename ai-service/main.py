@@ -50,6 +50,7 @@ class GenerateRequest(BaseModel):
     user_id: str
     preferences: Preferences = Preferences()
     wardrobe_items: List[Dict[str, Any]]
+    locked_item_ids: List[str] = []
 
 
 class SearchRequest(BaseModel):
@@ -65,6 +66,7 @@ class OutfitState(TypedDict):
     user_id: str
     wardrobe_items: List[Dict[str, Any]]
     preferences: Dict[str, Any]
+    locked_item_ids: List[str]
     categorized: Dict[str, List[Dict[str, Any]]]
     selected_outfit: Optional[Dict[str, Any]]
     errors: List[str]
@@ -249,6 +251,7 @@ def select_outfit(state: OutfitState) -> OutfitState:
     """Stage 3+4 combined: LLM re-ranks and selects the final outfit."""
     items = state.get("wardrobe_items", [])
     prefs = state.get("preferences", {})
+    locked_item_ids: List[str] = state.get("locked_item_ids", [])
 
     # Build a compact representation for the LLM
     summarized = [summarize_item(it) for it in items]
@@ -272,6 +275,18 @@ def select_outfit(state: OutfitState) -> OutfitState:
     ]
     if feedback:
         user_message_parts.append(f"## FEEDBACK FROM PREVIOUS GENERATION\n{feedback}\n(This is the PRIMARY constraint — address it above all else.)")
+
+    if locked_item_ids:
+        locked_items_info = [
+            summarize_item(it) for it in items
+            if str(it.get("id", it.get("_id", ""))) in locked_item_ids
+        ]
+        user_message_parts.append(
+            f"## LOCKED ITEMS — MANDATORY\n"
+            f"The user has manually selected the following item(s). You MUST include ALL of them in selected_item_ids. "
+            f"Build the rest of the outfit to complement these locked pieces.\n"
+            + json.dumps(locked_items_info, indent=2, default=str)
+        )
 
     user_message_parts.append(f"\n## WARDROBE ITEMS ({len(summarized)} total, pre-filtered for relevance)\n")
     user_message_parts.append(json.dumps(summarized, indent=2, default=str))
@@ -462,6 +477,7 @@ def generate_outfit(req: GenerateRequest) -> dict:
         "user_id": req.user_id,
         "wardrobe_items": req.wardrobe_items,
         "preferences": prefs,
+        "locked_item_ids": req.locked_item_ids,
         "categorized": {},
         "selected_outfit": None,
         "errors": [],

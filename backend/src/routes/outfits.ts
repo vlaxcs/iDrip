@@ -116,7 +116,7 @@ function capPerCategory(items: IWardrobeItem[]): IWardrobeItem[] {
 
 router.post('/generate', checkGenerationLimit, async (req: Request, res: Response) => {
   const userId = req.userId!;
-  const { occasion, weather, season, free_text, feedback } = req.body;
+  const { occasion, weather, season, free_text, feedback, locked_item_ids } = req.body;
 
   const preferences = {
     occasion: occasion || null,
@@ -125,6 +125,8 @@ router.post('/generate', checkGenerationLimit, async (req: Request, res: Respons
     free_text: free_text || null,
     feedback: feedback || null,
   };
+
+  const lockedItemIds: string[] = Array.isArray(locked_item_ids) ? locked_item_ids : [];
 
   console.log(`[outfits] Generate request — preferences:`, preferences);
 
@@ -148,7 +150,18 @@ router.post('/generate', checkGenerationLimit, async (req: Request, res: Respons
     return;
   }
 
-  // Step 3: Call AI service to select and generate the outfit
+  // Step 3: Ensure locked items are always included (vector search may have omitted them)
+  if (lockedItemIds.length > 0) {
+    const retrievedIds = new Set(retrievedItems.map((i) => i._id.toString()));
+    const allUserItems = await WardrobeItem.find({ userId, _id: { $in: lockedItemIds } }).lean();
+    for (const lockedItem of allUserItems) {
+      if (!retrievedIds.has(lockedItem._id.toString())) {
+        retrievedItems.push(lockedItem as IWardrobeItem);
+      }
+    }
+  }
+
+  // Step 4: Call AI service to select and generate the outfit
   const serialized = retrievedItems.map((item) => {
     const obj = item.toObject ? item.toObject() : item;
     // Convert ObjectId to string
@@ -156,11 +169,14 @@ router.post('/generate', checkGenerationLimit, async (req: Request, res: Respons
     return obj;
   });
 
+  console.log('[outfits] Sending to AI — locked_item_ids:', lockedItemIds, 'items count:', serialized.length);
+
   try {
     const aiResponse = await generateOutfitAI({
       user_id: userId,
       wardrobe_items: serialized,
       preferences,
+      locked_item_ids: lockedItemIds,
     });
 
     // Step 4: Validate all returned IDs exist in the user's full wardrobe

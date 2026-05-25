@@ -107,7 +107,10 @@ export const useOutfitStore = create<OutfitState>()(
       generateOutfit: async (params: OutfitGenerationRequest) => {
         set({ isGenerating: true, error: null });
         try {
-          const raw = await outfitService.generate(params);
+          const raw = await outfitService.generate({
+            ...params,
+            locked_item_ids: params.locked_item_ids?.length ? params.locked_item_ids : undefined,
+          });
           const outfit = backendOutfitToFrontend(raw as unknown as Record<string, unknown>);
           set({
             pendingOutfit: outfit,

@@ -153,7 +153,7 @@ const wardrobeItemSchema = new Schema<IWardrobeItem>(
     publicId: { type: String, default: '' },
     embedding: { type: [Number], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true } }
 );
 
 export default model<IWardrobeItem>('WardrobeItem', wardrobeItemSchema);

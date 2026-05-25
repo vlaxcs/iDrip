@@ -48,4 +48,5 @@ export interface OutfitGenerationRequest {
   season?: Season | null;
   free_text?: string;
   feedback?: string;
+  locked_item_ids?: string[];
 }

@@ -5,6 +5,7 @@ import { OutfitBuilder } from "@/components/outfit/OutfitBuilder";
 import { GenerateButton } from "@/components/outfit/GenerateButton";
 import { OutfitGrid } from "@/components/outfit/OutfitGrid";
 import { OutfitPreviewModal } from "@/components/outfit/OutfitPreviewModal";
+import { WardrobePickerModal } from "@/components/outfit/WardrobePickerModal";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { OptionWheel, type WheelOption } from "@/components/shared/OptionWheel";
 import { useOutfitStore } from "@/stores/useOutfitStore";
@@ -12,7 +13,7 @@ import { useWardrobeStore } from "@/stores/useWardrobeStore";
 
 import { cn } from "@/lib/utils";
 import type { OutfitOccasion, OutfitSlotKey, Weather } from "@/types/outfit";
-import type { Season } from "@/types/wardrobe";
+import type { ClothingItem, Season } from "@/types/wardrobe";
 
 const OCCASION_WHEEL: WheelOption<OutfitOccasion>[] = [
   { value: "casual", label: "Casual", Icon: Coffee },
@@ -29,6 +30,15 @@ const SEASON_WHEEL: WheelOption<Season>[] = [
   { value: "fall", label: "Fall", Icon: Leaf },
   { value: "winter", label: "Winter", Icon: Snowflake },
 ];
+
+const SLOT_LABELS: Record<OutfitSlotKey, string> = {
+  top: "Top",
+  bottom: "Bottom",
+  shoes: "Shoes",
+  outerwear: "Outerwear",
+  accessory1: "Accessory",
+  accessory2: "Accessory 2",
+};
 
 export default function OutfitGeneratorPage() {
   const {
@@ -51,17 +61,27 @@ export default function OutfitGeneratorPage() {
   const [season, setSeason] = useState<Season>("all");
   const [freeText, setFreeText] = useState("");
 
+  // Locked items: user-selected items that must be included in the generated outfit
+  const [lockedItems, setLockedItems] = useState<Partial<Record<OutfitSlotKey, ClothingItem>>>({});
+  const [pickerSlot, setPickerSlot] = useState<OutfitSlotKey | null>(null);
+
   useEffect(() => {
     loadItems();
     loadOutfits();
   }, [loadItems, loadOutfits]);
+
+  const lockedItemIds = useMemo(
+    () => Object.values(lockedItems).map((item) => item!.id),
+    [lockedItems]
+  );
 
   const currentParams = useMemo(() => ({
     occasion: occasion || undefined,
     weather: weather || undefined,
     season: season !== "all" ? season : undefined,
     free_text: freeText || undefined,
-  }), [occasion, weather, season, freeText]);
+    locked_item_ids: lockedItemIds.length > 0 ? lockedItemIds : undefined,
+  }), [occasion, weather, season, freeText, lockedItemIds]);
 
   const handleGenerate = useCallback(async () => {
     if (items.length < 3) return;
@@ -78,11 +98,11 @@ export default function OutfitGeneratorPage() {
     setSeason("all");
     setFreeText("");
     try {
-      await generateOutfit({});
+      await generateOutfit({ locked_item_ids: lockedItemIds.length > 0 ? lockedItemIds : undefined });
     } catch (_) {
       // Error is set in the store
     }
-  }, [generateOutfit]);
+  }, [generateOutfit, lockedItemIds]);
 
   const handleConfirm = useCallback(
     async (outfit: typeof pendingOutfit extends null ? never : NonNullable<typeof pendingOutfit>) => {
@@ -104,8 +124,21 @@ export default function OutfitGeneratorPage() {
     [regenerateOutfit, currentParams]
   );
 
-  const handleSlotClick = useCallback((_slot: OutfitSlotKey) => {
-    // Future: manual slot editing
+  const handleSlotClick = useCallback((slot: OutfitSlotKey) => {
+    // If already locked, clicking opens picker to change the item
+    setPickerSlot(slot);
+  }, []);
+
+  const handleSlotRemove = useCallback((slot: OutfitSlotKey) => {
+    setLockedItems((prev) => {
+      const next = { ...prev };
+      delete next[slot];
+      return next;
+    });
+  }, []);
+
+  const handlePickerSelect = useCallback((slot: OutfitSlotKey, item: ClothingItem) => {
+    setLockedItems((prev) => ({ ...prev, [slot]: item }));
   }, []);
 
   const hasEnoughItems =
@@ -187,7 +220,19 @@ export default function OutfitGeneratorPage() {
             </div>
           )}
 
-          <OutfitBuilder currentBuild={currentBuild} onSlotClick={handleSlotClick} isGenerating={isGenerating} />
+          <OutfitBuilder
+            currentBuild={currentBuild}
+            lockedItems={lockedItems}
+            onSlotClick={handleSlotClick}
+            onSlotRemove={handleSlotRemove}
+            isGenerating={isGenerating}
+          />
+
+          {lockedItemIds.length > 0 && (
+            <p className="text-xs kit-muted text-center">
+              {lockedItemIds.length} item{lockedItemIds.length > 1 ? "s" : ""} locked — AI will build around {lockedItemIds.length > 1 ? "them" : "it"}
+            </p>
+          )}
 
           {currentBuild.top && !isGenerating && (
             <div className="kit-card p-4">
@@ -248,6 +293,18 @@ export default function OutfitGeneratorPage() {
         onRegenerate={handleRegenerate}
         onDismiss={dismissPreview}
         isRegenerating={isGenerating}
+      />
+
+      {/* Wardrobe Picker Modal */}
+      <WardrobePickerModal
+        open={pickerSlot !== null}
+        slotKey={pickerSlot}
+        slotLabel={pickerSlot ? SLOT_LABELS[pickerSlot] : ""}
+        items={items}
+        onSelect={(item) => {
+          if (pickerSlot) handlePickerSelect(pickerSlot, item);
+        }}
+        onClose={() => setPickerSlot(null)}
       />
     </PageContainer>
   );
