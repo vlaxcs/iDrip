@@ -109,6 +109,7 @@ export default function OutfitGeneratorPage() {
       if (!outfit) return;
       const collection = outfit.collectionName?.trim() || undefined;
       await confirmOutfit(outfit.id, collection);
+      setLockedItems({});
     },
     [confirmOutfit]
   );
@@ -291,7 +292,7 @@ export default function OutfitGeneratorPage() {
         outfit={pendingOutfit}
         onConfirm={handleConfirm}
         onRegenerate={handleRegenerate}
-        onDismiss={dismissPreview}
+        onDismiss={() => { dismissPreview(); setLockedItems({}); }}
         isRegenerating={isGenerating}
       />
 

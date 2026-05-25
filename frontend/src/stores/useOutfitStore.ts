@@ -132,6 +132,7 @@ export const useOutfitStore = create<OutfitState>()(
           set((state) => ({
             outfits: [frontend, ...state.outfits],
             pendingOutfit: null,
+            currentBuild: {},
             error: null,
           }));
         } catch (err: any) {
@@ -159,7 +160,7 @@ export const useOutfitStore = create<OutfitState>()(
       },
 
       dismissPreview: () => {
-        set({ pendingOutfit: null, error: null });
+        set({ pendingOutfit: null, currentBuild: {}, error: null });
       },
 
       deleteOutfit: (id) => {
