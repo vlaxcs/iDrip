@@ -105,7 +105,7 @@ export function ClothingDetailSheet({ item, onClose, onEdit }: ClothingDetailShe
     "necklaceLength", "hatStyle", "earringStyle", "tieStyle", "watchStyle", "lensColor",
   ];
   for (const key of condKeys) {
-    const val = (item as any)[key];
+    const val = item[key];
     if (val && typeof val === "string" && val.length > 0) {
       detailFields.push([key, val]);
     }
@@ -300,11 +300,15 @@ export function ClothingDetailSheet({ item, onClose, onEdit }: ClothingDetailShe
           )}
 
           {/* Seasons */}
-          {(item.season ?? (item as any).seasons) && (item.season ?? (item as any).seasons).length > 0 && (
+          {(() => {
+            // Legacy items may have used `seasons` (plural) instead of `season`
+            const seasonsList: string[] = item.season ?? (item as ClothingItem & { seasons?: string[] }).seasons ?? [];
+            if (seasonsList.length === 0) return null;
+            return (
           <div>
             <span className="kit-overline">Seasons</span>
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {(item.season ?? (item as any).seasons ?? []).map((s: string) => (
+              {seasonsList.map((s: string) => (
                 <span
                   key={s}
                   className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--sidebar-accent))] text-black text-xs font-semibold capitalize"
@@ -314,7 +318,8 @@ export function ClothingDetailSheet({ item, onClose, onEdit }: ClothingDetailShe
               ))}
             </div>
           </div>
-          )}
+            );
+          })()}
 
           {/* Tags */}
           {item.tags && item.tags.length > 0 && (
