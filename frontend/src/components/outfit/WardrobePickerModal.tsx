@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, Loader2, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useWardrobeStore } from "@/stores/useWardrobeStore";
 import type { ClothingItem, ClothingCategory } from "@/types/wardrobe";
 import type { OutfitSlotKey } from "@/types/outfit";
 
@@ -36,6 +38,14 @@ export function WardrobePickerModal({
   useScrollLock(open);
   const visible = phase === "visible";
   const overlayRef = useRef<HTMLDivElement>(null);
+  const isLoading = useWardrobeStore((s) => s.isLoading);
+  const navigate = useNavigate();
+
+  // Freeze slotKey during exit animation so the filtered list doesn't flash to "all items"
+  const frozenSlotKey = useRef(slotKey);
+  if (slotKey !== null) frozenSlotKey.current = slotKey;
+  const frozenSlotLabel = useRef(slotLabel);
+  if (slotLabel) frozenSlotLabel.current = slotLabel;
 
   useEffect(() => {
     if (!open) return;
@@ -48,7 +58,7 @@ export function WardrobePickerModal({
 
   if (!shouldRender) return null;
 
-  const category = slotKey ? SLOT_TO_CATEGORY[slotKey] : null;
+  const category = frozenSlotKey.current ? SLOT_TO_CATEGORY[frozenSlotKey.current] : null;
   const filtered = category ? items.filter((i) => i.category === category) : items;
 
   return (
@@ -74,7 +84,7 @@ export function WardrobePickerModal({
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[hsl(var(--border)/0.4)]">
           <div>
             <p className="kit-overline">Select item</p>
-            <h3 className="font-semibold text-base mt-0.5">{slotLabel}</h3>
+            <h3 className="font-semibold text-base mt-0.5">{frozenSlotLabel.current}</h3>
           </div>
           <button
             onClick={onClose}
@@ -87,10 +97,23 @@ export function WardrobePickerModal({
 
         {/* Grid */}
         <div className="overflow-y-auto p-4">
-          {filtered.length === 0 ? (
-            <p className="text-sm kit-muted text-center py-8">
-              No {slotLabel.toLowerCase()} items in your wardrobe yet.
-            </p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 gap-2 kit-muted">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Loading wardrobe...</span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm kit-muted">
+                No {frozenSlotLabel.current.toLowerCase()} items in your wardrobe yet.
+              </p>
+              <button
+                onClick={() => { onClose(); navigate("/wardrobe"); }}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-[hsl(var(--sidebar-accent))] text-black hover:brightness-95 transition-all"
+              >
+                Go to Wardrobe <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {filtered.map((item) => (

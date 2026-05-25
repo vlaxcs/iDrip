@@ -21,7 +21,7 @@ export const wardrobeService = {
   },
 
   async getById(id: string): Promise<ClothingItem> {
-    return api.get<ClothingItem>(`/api/wardrobe/${id}`);
+    return api.get<ClothingItem>(`/wardrobe/${id}`);
   },
 
   async create(data: ClothingItemInput): Promise<ClothingItem> {
@@ -29,11 +29,11 @@ export const wardrobeService = {
   },
 
   async update(id: string, updates: Partial<ClothingItemInput>): Promise<ClothingItem> {
-    return api.put<ClothingItem>(`/api/wardrobe/${id}`, updates);
+    return api.put<ClothingItem>(`/wardrobe/${id}`, updates);
   },
 
   async remove(id: string): Promise<void> {
-    return api.delete<void>(`/api/wardrobe/${id}`);
+    return api.delete<void>(`/wardrobe/${id}`);
   },
 
   async uploadImage(file: File): Promise<UploadImageResponse> {
