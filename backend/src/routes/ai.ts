@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { analyzeClothing } from '../services/aiAnalysisService';
+import { generateChatResponse } from '../services/aiChatService';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ function checkRateLimit(req: Request, res: Response, next: any) {
 
   if (entry && now < entry.resetAt) {
     if (entry.count >= 10) {
-      res.status(429).json({ error: 'Too many analysis requests. Try again in a minute.' });
+      res.status(429).json({ error: 'Too many requests. Try again in a minute.' });
       return;
     }
     entry.count++;
@@ -22,6 +23,27 @@ function checkRateLimit(req: Request, res: Response, next: any) {
   }
   next();
 }
+
+router.post('/chat', checkRateLimit, async (req: Request, res: Response) => {
+  const { messages } = req.body;
+
+  if (!messages || !Array.isArray(messages)) {
+    res.status(400).json({ error: 'Invalid messages array' });
+    return;
+  }
+
+  try {
+    const reply = await generateChatResponse(messages);
+    res.json({ reply });
+  } catch (err: any) {
+    if (err.message.includes('API key not configured') || err.message.includes('No AI API key configured')) {
+      res.status(503).json({ error: 'AI service is not configured' });
+      return;
+    }
+    console.error('[aiChat] error:', err.message);
+    res.status(500).json({ error: 'Failed to generate chat response' });
+  }
+});
 
 router.post('/analyze-clothing', checkRateLimit, async (req: Request, res: Response) => {
   const { imageUrl } = req.body;
