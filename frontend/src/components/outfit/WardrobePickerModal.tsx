@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -38,6 +39,7 @@ export function WardrobePickerModal({
   const visible = phase === "visible";
   const overlayRef = useRef<HTMLDivElement>(null);
   const isLoading = useWardrobeStore((s) => s.isLoading);
+  const navigate = useNavigate();
 
   // Freeze slotKey during exit animation so the filtered list doesn't flash to "all items"
   const frozenSlotKey = useRef(slotKey);
@@ -101,9 +103,17 @@ export function WardrobePickerModal({
               <span className="text-sm">Loading wardrobe...</span>
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-sm kit-muted text-center py-8">
-              No {frozenSlotLabel.current.toLowerCase()} items in your wardrobe yet.
-            </p>
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm kit-muted">
+                No {frozenSlotLabel.current.toLowerCase()} items in your wardrobe yet.
+              </p>
+              <button
+                onClick={() => { onClose(); navigate("/wardrobe"); }}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-[hsl(var(--sidebar-accent))] text-black hover:brightness-95 transition-all"
+              >
+                Go to Wardrobe <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {filtered.map((item) => (
