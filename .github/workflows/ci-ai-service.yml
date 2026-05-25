@@ -56,4 +56,4 @@ jobs:
         run: python -c "import main"
 
       - name: Audit
-        run: pip-audit -r requirements.txt --disable-pip
+        run: pip-audit
