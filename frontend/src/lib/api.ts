@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const DEFAULT_TIMEOUT = 90000; // 90s — backend has 60s + retries, so we give it headroom
+const DEFAULT_TIMEOUT = 300000; // 300s (5 mins) — some AI requests with long reasoning take 90s+
 
 function getToken(): string | null {
   return localStorage.getItem('idrip-token');

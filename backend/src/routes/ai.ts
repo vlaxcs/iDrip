@@ -26,22 +26,36 @@ function checkRateLimit(req: Request, res: Response, next: any) {
 
 router.post('/chat', checkRateLimit, async (req: Request, res: Response) => {
   const { messages } = req.body;
+  const userId = req.userId as string;
 
   if (!messages || !Array.isArray(messages)) {
     res.status(400).json({ error: 'Invalid messages array' });
     return;
   }
 
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized user for chat' });
+    return;
+  }
+
   try {
-    const reply = await generateChatResponse(messages);
+    const reply = await generateChatResponse(userId, messages);
     res.json({ reply });
   } catch (err: any) {
+    console.error('[aiChat] error:', err.code || err.response?.status, err.message);
     if (err.message.includes('API key not configured') || err.message.includes('No AI API key configured')) {
       res.status(503).json({ error: 'AI service is not configured' });
       return;
     }
-    console.error('[aiChat] error:', err.message);
-    res.status(500).json({ error: 'Failed to generate chat response' });
+    if (err.code === 'ETIMEDOUT' || err.message.includes('timed out') || err.message.includes('timeout')) {
+      res.status(504).json({ error: 'The AI took too long to respond. Please try again.' });
+      return;
+    }
+    if (err.response?.status === 429) {
+      res.status(429).json({ error: 'AI rate limit reached. Try again in a moment.' });
+      return;
+    }
+    res.status(500).json({ error: 'Something went wrong with the AI. Please try again.' });
   }
 });
 

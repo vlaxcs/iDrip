@@ -350,11 +350,16 @@
 }
 
 @utility sidebar-item-accent {
-  color: hsl(var(--sidebar-accent));
+  background: hsl(var(--sidebar-accent) / 0.15);
+  color: oklch(0.55 0.2 140); /* A strong green that pops on dark and light */
+  font-weight: 600;
   &:hover {
-    background: hsl(var(--sidebar-accent) / 0.1);
-    color: hsl(var(--sidebar-accent));
+    background: hsl(var(--sidebar-accent) / 0.25);
+    color: oklch(0.55 0.2 140);
   }
+}
+.dark .sidebar-item-accent {
+  color: hsl(var(--sidebar-accent));
 }
 
 @utility sidebar-tab {
