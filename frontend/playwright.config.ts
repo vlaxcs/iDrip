@@ -28,8 +28,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    // Use Vite preview against the production build — closer to what users actually hit
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
+    // Use Vite preview against the production build — closer to what users actually hit.
+    // --host 0.0.0.0 ensures the server binds to both IPv4 and IPv6 so Playwright's
+    // healthcheck against 127.0.0.1 succeeds on Linux CI (where localhost may otherwise
+    // resolve to ::1 first and leave the IPv4 check hanging until timeout).
+    command: 'npm run build && npm run preview -- --port 4173 --strictPort --host 0.0.0.0',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
