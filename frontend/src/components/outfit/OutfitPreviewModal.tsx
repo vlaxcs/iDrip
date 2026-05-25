@@ -190,7 +190,7 @@ export function OutfitPreviewModal({
                 <button
                   onClick={handleConfirm}
                   disabled={isProcessing}
-                  className="w-full py-3 rounded-2xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-[hsl(var(--sidebar-accent))] text-black text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
@@ -227,7 +227,7 @@ export function OutfitPreviewModal({
                     setModalState("confirming");
                   }}
                   disabled={isProcessing}
-                  className="w-full py-3 rounded-2xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-[hsl(var(--sidebar-accent))] text-black text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
