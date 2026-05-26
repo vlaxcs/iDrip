@@ -8,7 +8,9 @@ test.describe('Profile page', () => {
     await page.goto('/profile');
 
     await expect(page.getByRole('heading', { name: /^Profile$/i })).toBeVisible();
-    await expect(page.getByText('Test User').first()).toBeVisible();
+    // The profile card renders the user name as an <h3>; UserMenu also renders it
+    // in a hidden dropdown, so match the heading specifically.
+    await expect(page.getByRole('heading', { level: 3, name: 'Test User' })).toBeVisible();
   });
 
   test('clear-data wipes localStorage and reloads', async ({ page }) => {
