@@ -1,5 +1,4 @@
 """Tests for the /generate-outfit endpoint and underlying LangGraph agent."""
-import os
 import pytest
 from unittest.mock import patch
 

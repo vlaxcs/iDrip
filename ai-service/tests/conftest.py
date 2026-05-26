@@ -1,5 +1,4 @@
 """Shared pytest fixtures for ai-service tests."""
-import os
 import sys
 from pathlib import Path
 
