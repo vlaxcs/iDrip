@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { seedAuthenticatedUser, mockBackendDefaults } from './fixtures';
+import { seedAuthenticatedUser, mockBackendDefaults, makeFakeJwt } from './fixtures';
 
 test.describe('Authentication', () => {
   test('login page renders with the Google sign-in button', async ({ page }) => {
@@ -20,12 +20,13 @@ test.describe('Authentication', () => {
 
   test('/auth/callback with a token persists auth and lands the user on the dashboard', async ({ page }) => {
     await mockBackendDefaults(page);
-    await page.goto('/auth/callback?token=fake-jwt-token');
-    await expect(page).toHaveURL(/\/$|\/wardrobe/, { timeout: 5000 });
+    const token = makeFakeJwt({ userId: 'u-test', email: 'cb@idrip.local', name: 'Callback User' });
+    await page.goto(`/auth/callback?token=${token}`);
+    // The page decodes the JWT, writes to the store, and navigates to /
+    await expect(page).toHaveURL(/\/$/, { timeout: 5000 });
 
-    // Token persisted to localStorage
     const stored = await page.evaluate(() => window.localStorage.getItem('idrip-token'));
-    expect(stored).toBe('fake-jwt-token');
+    expect(stored).toBe(token);
   });
 
   test('authenticated user reaches the dashboard without redirect', async ({ page }) => {

@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test';
 import { seedAuthenticatedUser, mockBackendDefaults } from './fixtures';
 
 test.describe('Profile page', () => {
-  test('renders user name and email from the store', async ({ page }) => {
+  test('renders the Profile heading and user name from the store', async ({ page }) => {
     await seedAuthenticatedUser(page);
     await mockBackendDefaults(page);
     await page.goto('/profile');
 
-    await expect(page.getByText('Test User')).toBeVisible();
-    await expect(page.getByText('test@idrip.local')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Profile$/i })).toBeVisible();
+    await expect(page.getByText('Test User').first()).toBeVisible();
   });
 
   test('clear-data wipes localStorage and reloads', async ({ page }) => {

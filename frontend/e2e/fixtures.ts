@@ -28,6 +28,31 @@ export async function seedAuthenticatedUser(page: Page) {
 }
 
 /**
+ * Seed an arbitrary Zustand-persisted store before navigation.
+ * Useful when the store hydrates from localStorage instead of (or in addition to) the API.
+ */
+export async function seedPersistedStore(page: Page, key: string, partialState: Record<string, unknown>) {
+  const wrapped = JSON.stringify({ state: partialState, version: 0 });
+  await page.addInitScript(
+    ({ k, v }) => window.localStorage.setItem(k, v),
+    { k: key, v: wrapped }
+  );
+}
+
+/**
+ * Produce a valid-shape JWT (base64url-encoded payload). Signature is not verified
+ * client-side — the AuthCallbackPage just decodes the payload to seed the user.
+ */
+export function makeFakeJwt(payload: { userId: string; email: string; name: string }): string {
+  const b64url = (obj: object) =>
+    Buffer.from(JSON.stringify(obj)).toString('base64')
+      .replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const header = b64url({ alg: 'HS256', typ: 'JWT' });
+  const body = b64url({ ...payload, iat: 0, exp: 9_999_999_999 });
+  return `${header}.${body}.test-signature-not-verified`;
+}
+
+/**
  * Install API route mocks that satisfy the most common reads from a freshly-loaded
  * authenticated page. Tests can override individual routes with page.route().
  */

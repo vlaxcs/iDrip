@@ -51,7 +51,7 @@ test.describe('Wardrobe page', () => {
     await page.goto('/wardrobe');
 
     await page.getByRole('button', { name: /add item/i }).click();
-    // Dialog should mount — look for a recognizable form control
-    await expect(page.getByRole('dialog').or(page.locator('[role=dialog]'))).toBeVisible({ timeout: 3000 });
+    // ClothingUploadDialog uses a plain fixed overlay (no role=dialog) — assert on the heading instead
+    await expect(page.getByRole('heading', { name: /add clothing items/i })).toBeVisible({ timeout: 3000 });
   });
 });

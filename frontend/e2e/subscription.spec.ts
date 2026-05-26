@@ -17,25 +17,28 @@ test.describe('Subscription page', () => {
     await expect(page.getByText(/choose your plan/i)).toBeVisible();
   });
 
-  test('clicking a Pro plan triggers checkout (and falls back gracefully when Stripe is mocked)', async ({ page }) => {
-    let checkoutCalled = false;
-    await page.route(/\/api\/subscriptions\/create-checkout-session/, (route) => {
-      checkoutCalled = true;
-      route.fulfill({ status: 200, body: JSON.stringify({ url: 'https://stripe/checkout/test', sessionId: 'cs_test' }) });
+  test('clicking the highlighted Pro plan triggers create-checkout-session', async ({ page }) => {
+    const checkoutPromise = new Promise<boolean>((resolve) => {
+      page.route(/\/api\/subscriptions\/create-checkout-session/, (route) => {
+        resolve(true);
+        route.fulfill({
+          status: 200,
+          body: JSON.stringify({ url: 'about:blank', sessionId: 'cs_test' }),
+        });
+      });
+      // Resolve false after 6s so the test fails fast if the route is never hit
+      setTimeout(() => resolve(false), 6000);
     });
 
     await seedAuthenticatedUser(page);
     await mockBackendDefaults(page, { subscriptionTier: 'free' });
     await page.goto('/subscription');
 
-    // Click any "Upgrade" / "Subscribe" / "Start" button on a Pro plan card
-    const upgradeBtn = page.getByRole('button', { name: /upgrade|start|subscribe|get pro|choose/i }).first();
-    if (await upgradeBtn.count() > 0) {
-      await upgradeBtn.click({ timeout: 3000 }).catch(() => {});
-      // Give the request a moment to fire
-      await page.waitForTimeout(500);
-    }
-    expect(checkoutCalled).toBe(true);
+    // The Pro plan's primary CTA is exactly "Upgrade" (subscription card,
+    // plan.highlighted=true branch in SubscriptionPage.tsx).
+    await page.getByRole('button', { name: 'Upgrade' }).click({ timeout: 5000 });
+
+    expect(await checkoutPromise).toBe(true);
   });
 
   test('?success=true shows the success status message', async ({ page }) => {
