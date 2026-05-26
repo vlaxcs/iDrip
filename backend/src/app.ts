@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { authMiddleware } from './middleware/auth';
+import { apiRateLimit } from './middleware/rateLimit';
 import authRoutes from './routes/auth';
 import wardrobeRoutes from './routes/wardrobe';
 import outfitRoutes from './routes/outfits';
@@ -25,14 +26,14 @@ export function createApp() {
     res.status(200).json({ status: 'ok', message: 'iDrip Backend is running' });
   });
 
-  app.use('/api/auth', authRoutes);
-  app.use('/api/wardrobe', authMiddleware, wardrobeRoutes);
-  app.use('/api/outfits', authMiddleware, outfitRoutes);
-  app.use('/api/recommendations', authMiddleware, recommendationRoutes);
-  app.use('/api/users', authMiddleware, userRoutes);
-  app.use('/api/ai', authMiddleware, aiRoutes);
+  app.use('/api/auth', apiRateLimit, authRoutes);
+  app.use('/api/wardrobe', authMiddleware, apiRateLimit, wardrobeRoutes);
+  app.use('/api/outfits', authMiddleware, apiRateLimit, outfitRoutes);
+  app.use('/api/recommendations', authMiddleware, apiRateLimit, recommendationRoutes);
+  app.use('/api/users', authMiddleware, apiRateLimit, userRoutes);
+  app.use('/api/ai', authMiddleware, apiRateLimit, aiRoutes);
 
-  app.get('/api/subscriptions/plans', (_req, res) => {
+  app.get('/api/subscriptions/plans', apiRateLimit, (_req, res) => {
     const { PRICE_IDS } = require('./lib/stripe');
     res.json({
       plans: [
@@ -63,9 +64,9 @@ export function createApp() {
     });
   });
 
-  app.use('/api/subscriptions', authMiddleware, subscriptionRoutes);
+  app.use('/api/subscriptions', authMiddleware, apiRateLimit, subscriptionRoutes);
 
-  app.post('/api/subscriptions/mock-upgrade', authMiddleware, async (req: Request, res: Response) => {
+  app.post('/api/subscriptions/mock-upgrade', authMiddleware, apiRateLimit, async (req: Request, res: Response) => {
     const { tier } = req.body;
     if (!tier || !['pro', 'lifetime'].includes(tier)) {
       res.status(400).json({ error: 'tier must be "pro" or "lifetime"' });

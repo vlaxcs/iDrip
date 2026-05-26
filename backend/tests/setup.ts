@@ -11,6 +11,9 @@ process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy'
 process.env.STRIPE_PRICE_PRO_MONTHLY = 'price_pro_monthly';
 process.env.STRIPE_PRICE_PRO_YEARLY = 'price_pro_yearly';
 process.env.STRIPE_PRICE_LIFETIME = 'price_lifetime';
+// Don't let the global limiter trip during high-volume tests — the dedicated
+// rate-limit test for /api/ai/analyze-clothing covers the in-route limiter.
+process.env.RATE_LIMIT_MAX = '10000';
 
 // Silence verbose console output from the routes during tests
 vi.spyOn(console, 'log').mockImplementation(() => {});
